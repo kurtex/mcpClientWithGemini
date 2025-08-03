@@ -1,6 +1,6 @@
 # Gemini MCP Client/Server
 
-This project implements a client-server architecture to interact with Google's Gemini Pro model. The server acts as a proxy, handling requests from multiple clients and communicating with the Gemini API. The client provides a simple command-line interface for users to send prompts and receive responses.
+This project implements a client-server architecture to interact with Google's Gemini Pro model, following the **Model Context Protocol (MCP)** specification. The server acts as a proxy, handling requests from multiple clients and communicating with the Gemini API. The client provides a simple command-line interface for users to send prompts and receive responses.
 
 ## Technology Stack
 
@@ -60,7 +60,7 @@ This project implements a client-server architecture to interact with Google's G
 
 5.  **Run the client:**
 
-    Open a new terminal. The client also needs the `MCP_SERVER_TOKEN` to authenticate. You can set it as an environment variable before running the client:
+    Open a new terminal. The client needs the `MCP_SERVER_TOKEN` to authenticate with the server. You can set it as an environment variable before running the client. This token will be sent with every prompt to the server for verification.
 
     ```bash
     export MCP_SERVER_TOKEN=your_secret_token

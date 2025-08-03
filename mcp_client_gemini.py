@@ -17,9 +17,6 @@ class MCPClient:
     async def connect(self):
         try:
             self.connection = await websockets.connect(self.uri, ssl=self.ssl_context)
-            # Send authentication token immediately after connecting.
-            if self.token:
-                await self.connection.send(json.dumps({"token": self.token}))
             print("Conectado al servidor MCP. Escribe 'salir' o 'exit' para terminar.")
         except websockets.exceptions.ConnectionClosed as e:
             print(f"[ERROR] No se pudo conectar. El servidor cerró la conexión: {e.reason}")
@@ -43,6 +40,9 @@ class MCPClient:
             "content": self.conversation_history,
             "metadata": metadata
         }
+        if self.token:
+            message["token"] = self.token
+            
         try:
             await self.connection.send(json.dumps(message))
         except websockets.exceptions.ConnectionClosed as e:

@@ -5,18 +5,19 @@ set -e
 # --- Configuración ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
-REQUIREMENTS_FILE="$SCRIPT_DIR/client_requirements.txt"
+PROD_REQUIREMENTS_FILE="$SCRIPT_DIR/client_requirements.txt"
+DEV_REQUIREMENTS_FILE="$SCRIPT_DIR/dev-requirements.txt"
 
 # --- Script Principal ---
 echo "--- Auditoría de Seguridad de Dependencias ---"
 
 # 1. Asegurarse de que el entorno virtual y las dependencias están listos.
-# (Esta lógica es similar a la de run_client.sh para ser autocontenido)
-if [ ! -d "$VENV_DIR" ] || [ "$REQUIREMENTS_FILE" -nt "$VENV_DIR" ]; then
+if [ ! -d "$VENV_DIR" ] || [ "$PROD_REQUIREMENTS_FILE" -nt "$VENV_DIR" ] || [ "$DEV_REQUIREMENTS_FILE" -nt "$VENV_DIR" ]; then
     echo "Configurando/Actualizando el entorno virtual para la auditoría..."
     rm -rf "$VENV_DIR"
     python3 -m venv "$VENV_DIR"
-    "$VENV_DIR/bin/pip" install -r "$REQUIREMENTS_FILE"
+    echo "Instalando dependencias de producción y desarrollo..."
+    "$VENV_DIR/bin/pip" install -r "$PROD_REQUIREMENTS_FILE" -r "$DEV_REQUIREMENTS_FILE"
 fi
 
 # 2. Ejecutar pip-audit usando el intérprete del entorno virtual.

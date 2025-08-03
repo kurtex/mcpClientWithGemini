@@ -7,20 +7,27 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 REQUIREMENTS_FILE="$SCRIPT_DIR/client_requirements.txt"
+PIP_STAMP_FILE="$VENV_DIR/.pip_installed" # Archivo marcador para la instalación
 
-# --- Creación/Corrección del archivo de requisitos ---
-# Se sobrescribe cada vez para garantizar que siempre sea correcto.
-echo "Asegurando la lista correcta de dependencias..."
-printf "%s\n" "websockets" "python-dotenv" > "$REQUIREMENTS_FILE"
+# --- Creación del archivo de requisitos si no existe ---
+# Solo se crea si no está presente, para no sobreescribir cambios manuales.
+if [ ! -f "$REQUIREMENTS_FILE" ]; then
+    echo "Creando archivo de dependencias 'client_requirements.txt' por primera vez..."
+    printf "%s\n" "websockets" "python-dotenv" > "$REQUIREMENTS_FILE"
+fi
 
-# --- Creación/Actualización del entorno virtual ---
-# Solo se (re)crea el venv si no existe o si los requisitos han cambiado (lo cual es siempre, por el paso anterior).
-if [ ! -d "$VENV_DIR" ] || [ "$REQUIREMENTS_FILE" -nt "$VENV_DIR" ]; then
+# --- Creación/Actualización del entorno virtual y dependencias ---
+# Solo se (re)instala si el venv no existe, el marcador falta o los requisitos son más recientes.
+if [ ! -d "$VENV_DIR" ] || [ ! -f "$PIP_STAMP_FILE" ] || [ "$REQUIREMENTS_FILE" -nt "$PIP_STAMP_FILE" ]; then
     echo "Creando/Actualizando el entorno virtual..."
     rm -rf "$VENV_DIR"
     python3 -m venv "$VENV_DIR"
     echo "Instalando dependencias..."
     "$VENV_DIR/bin/pip" install -r "$REQUIREMENTS_FILE"
+    echo "Instalación completada."
+    touch "$PIP_STAMP_FILE" # Se crea/actualiza el archivo marcador
+else
+    echo "El entorno virtual y las dependencias ya están actualizados."
 fi
 
 # --- Búsqueda del intérprete de Python correcto ---

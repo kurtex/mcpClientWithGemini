@@ -68,24 +68,8 @@ def is_rate_limited(client_ip: str) -> bool:
 # --- WebSocket Handler ---
 async def handle_connection(websocket):
     client_ip = websocket.remote_address[0]
-    logging.info(f"Cliente conectado desde {client_ip}. Esperando autenticación.")
+    logging.info(f"Cliente conectado desde {client_ip}. Esperando prompts.")
 
-    try:
-        auth_message = await asyncio.wait_for(websocket.recv(), timeout=10.0)
-        auth_data = json.loads(auth_message)
-        if MCP_SERVER_TOKEN and auth_data.get("token") != MCP_SERVER_TOKEN:
-            logging.warning(f"Fallo de autenticación desde {client_ip}.")
-            await websocket.close(code=1008, reason="Authentication failed")
-            return
-    except (asyncio.TimeoutError, json.JSONDecodeError):
-        logging.warning(f"No se recibió la autenticación a tiempo desde {client_ip}.")
-        await websocket.close(code=1008, reason="Authentication required")
-        return
-    except websockets.exceptions.ConnectionClosed:
-        logging.info(f"Conexión cerrada por {client_ip} antes de la autenticación.")
-        return
-
-    logging.info(f"Cliente {client_ip} autenticado. Esperando prompts.")
     try:
         async for message in websocket:
             # --- Security Check: Rate Limiting ---
@@ -95,12 +79,16 @@ async def handle_connection(websocket):
                 continue
 
             try:
-                # --- Security Check: Input Validation ---
+                # --- Security Check: Input Validation and Authentication ---
                 try:
                     data = json.loads(message)
                     if not isinstance(data, dict) or data.get("type") != "prompt" or "content" not in data:
                         raise ValueError("El JSON recibido es inválido o no tiene el formato esperado.")
                     
+                    # --- Authentication ---
+                    if MCP_SERVER_TOKEN and data.get("token") != MCP_SERVER_TOKEN:
+                        raise ValueError("Fallo de autenticación.")
+
                     history_str = json.dumps(data["content"])
                     if len(history_str) > MAX_HISTORY_SIZE:
                         raise ValueError(f"El historial de la conversación excede el tamaño máximo de {MAX_HISTORY_SIZE} caracteres.")
